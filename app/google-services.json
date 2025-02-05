@@ -1,0 +1,30 @@
+{
+  "project_info": {
+    "project_number": "629677771642",
+    "firebase_url": "https://appmonitoreo-4d274-default-rtdb.firebaseio.com",
+    "project_id": "appmonitoreo-4d274",
+    "storage_bucket": "appmonitoreo-4d274.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:629677771642:android:4b56b591cebb29cfa7e4c3",
+        "android_client_info": {
+          "package_name": "dev.mario.appmonitoreo"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDxgBzhZxHPo6lDc1K10w4iQTaYxb8_8rU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
