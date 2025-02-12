@@ -1,0 +1,85 @@
+#include <HX711.h>
+#include <WiFi.h>
+#include <HTTPClient.h>
+
+const int ld_cell = 2;
+const int ld_sck = 4;
+HX711 scale;
+
+const char* ssid = "Wokwi-GUEST";
+const char* password = "";
+const String serverUrl = "https://appmonitoreo-4d274-default-rtdb.firebaseio.com/";
+
+float calibration_factor = 419.8;  // Ajusta este valor según la calibración
+
+void setup() {
+  Serial.begin(115200);
+  scale.begin(ld_cell, ld_sck);
+  
+  Serial.println("Calibrando sensor...");
+  scale.tare(); // Restablece la celda de carga a cero
+
+  WiFi.begin(ssid, password);
+  Serial.print("Conectando a WiFi");
+  int attempts = 0;
+  while (WiFi.status() != WL_CONNECTED && attempts < 20) {
+    delay(500);
+    Serial.print(".");
+    attempts++;
+  }
+
+  if (WiFi.status() == WL_CONNECTED) {
+    Serial.println("Conectado a WiFi");
+  } else {
+    Serial.println("No se pudo conectar a WiFi");
+    ESP.restart();
+  }
+}
+
+void loop() {
+  // Generar una altura aleatoria dentro del rango
+  float height = random(0, 500) / 100.0; // Convertir de cm a metros (0.00 - 5.00 m)
+  Serial.print("Nivel del pozo: ");
+  Serial.print(height);
+  Serial.println(" m");
+
+  String levelStatus;
+  if (height >= 0.0 && height <= 1.25) {
+    levelStatus = "Bajo (0%-25%): No requiere mantenimiento inmediato.";
+  } else if (height > 1.25 && height <= 2.50) {
+    levelStatus = "Moderado (26%-50%): Planificar mantenimiento.";
+  } else if (height > 2.50 && height <= 3.75) {
+    levelStatus = "Alto (51%-75%): Requiere atención inmediata.";
+  } else if (height > 3.75 && height <= 5.00) {
+    levelStatus = "Crítico (76%-100%): Capacidad máxima, intervención urgente.";
+  } else {
+    levelStatus = "Error: Nivel fuera de rango.";
+  }
+
+  Serial.println(levelStatus);
+
+  // Obtener timestamp en milisegundos
+  unsigned long timestamp = millis() / 1000;
+  
+  HTTPClient http;
+  String firebaseUrl = serverUrl + "/pozo_nivel.json"; // Guarda cada lectura como un nuevo nodo
+  http.begin(firebaseUrl);
+  http.addHeader("Content-Type", "application/json");
+  
+  String payload = "{";
+  payload += "\"timestamp\": " + String(timestamp) + ",";
+  payload += "\"height\": " + String(height) + ",";
+  payload += "\"status\": \"" + levelStatus + "\"";
+  payload += "}";
+  
+  int httpResponseCode = http.POST(payload);
+  if (httpResponseCode > 0) {
+    String response = http.getString();
+    Serial.println("Datos enviados a Firebase: " + response);
+  } else {
+    Serial.println("Error en la solicitud. Código de respuesta: " + String(httpResponseCode));
+  }
+  http.end();
+
+  delay(10000);
+}
